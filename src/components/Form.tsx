@@ -69,7 +69,8 @@ function Form() {
       id: String(Date.now()),
       position: { lat: Number(lat), lng: Number(lng) },
     };
-    createCity(newCity).then(() => navigate("../cities"));
+    createCity(newCity);
+    navigate("../cities");
   }
 
   return (

@@ -1,19 +1,13 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useReducer,
-} from "react";
+import { createContext, useCallback, useContext, useReducer } from "react";
 
 type CitiesContextType = {
   cities: City[];
   currentCity: City | null;
   isLoading: boolean;
-  getCurrentCity: (id: string) => Promise<void>;
+  getCurrentCity: (id: string) => void;
   setCurrentCity: (data: City | null) => void;
-  removeCity: (id: string) => Promise<void>;
-  createCity: (newCity: City) => Promise<void>;
+  removeCity: (id: string) => void;
+  createCity: (newCity: City) => void;
 };
 
 type State = {
@@ -24,18 +18,51 @@ type State = {
 };
 
 type Action =
-  | { type: "loading" }
-  | { type: "cities/loaded"; payload: City[] }
   | { type: "city/set"; payload: City | null }
   | { type: "cities/created"; payload: City }
-  | { type: "cities/deleted"; payload: string }
-  | { type: "rejected"; payload: string };
+  | { type: "cities/deleted"; payload: string };
 
 const CitiesContext = createContext<CitiesContextType | undefined>(undefined);
-const BASE_URL = "http://localhost:8000";
 
 const initialState: State = {
-  cities: [],
+  cities: [
+    {
+      cityName: "Lisbon",
+      country: "Portugal",
+      emoji: "🇵🇹",
+      date: "2027-10-31T15:59:59.138Z",
+      notes: "My favorite city so far!",
+      position: {
+        lat: 38.727881642324164,
+        lng: -9.140900099907554,
+      },
+      id: "73930385",
+    },
+    {
+      cityName: "Madrid",
+      country: "Spain",
+      emoji: "🇪🇸",
+      date: "2027-07-15T08:22:53.976Z",
+      notes: "",
+      position: {
+        lat: 40.46635901755316,
+        lng: -3.7133789062500004,
+      },
+      id: "17806751",
+    },
+    {
+      id: "1736883785583",
+      cityName: "Tora",
+      country: "Spain",
+      emoji: "🇪🇸",
+      date: "2025-01-14T19:43:02.442Z",
+      notes: "",
+      position: {
+        lat: 41.902277040963696,
+        lng: 1.4941406250000002,
+      },
+    },
+  ],
   isLoading: false,
   error: "",
   currentCity: null,
@@ -43,34 +70,21 @@ const initialState: State = {
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "loading":
-      return { ...state, isLoading: true };
-    case "cities/loaded":
-      return {
-        ...state,
-        isLoading: false,
-        cities: action.payload,
-      };
     case "city/set":
       return {
         ...state,
-        isLoading: false,
         currentCity: action.payload,
       };
     case "cities/created":
       return {
         ...state,
-        isLoading: false,
         cities: [...state.cities, action.payload],
       };
     case "cities/deleted":
       return {
         ...state,
-        isLoading: false,
         cities: [...state.cities.filter((city) => city.id !== action.payload)],
       };
-    case "rejected":
-      return { ...state, isLoading: false, error: action.payload };
     default:
       throw new Error("Unknown action type");
   }
@@ -81,71 +95,28 @@ function CitiesContextProvider({ children }: { children: React.ReactNode }) {
     reducer,
     initialState
   );
-  useEffect(() => {
-    async function fetchCities() {
-      try {
-        dispatch({ type: "loading" });
-        const res = await fetch(`${BASE_URL}/cities`);
-        const data = await res.json();
-        dispatch({ type: "cities/loaded", payload: data });
-      } catch {
-        dispatch({
-          type: "rejected",
-          payload: "There was an error fetching data",
-        });
-      }
-    }
-    fetchCities();
-  }, []);
+
+  // loads individual city
+
   const getCurrentCity = useCallback(
-    async function getCurrentCity(id: string) {
+    function getCurrentCity(id: string) {
       if (Number(id) === Number(currentCity?.id)) return;
-      try {
-        dispatch({ type: "loading" });
-        const res = await fetch(`${BASE_URL}/cities/${id}`);
-        const data = await res.json();
-        dispatch({ type: "city/set", payload: data });
-      } catch {
-        dispatch({
-          type: "rejected",
-          payload: "There was an error fetching data",
-        });
-      }
+      const data = cities.find((city) => city.id === id) ?? null;
+      dispatch({ type: "city/set", payload: data });
     },
-    [currentCity?.id]
+    [currentCity?.id, cities]
   );
-  async function createCity(newCity: City) {
-    try {
-      dispatch({ type: "loading" });
-      const res = await fetch(`${BASE_URL}/cities`, {
-        method: "POST",
-        body: JSON.stringify(newCity),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await res.json();
-      dispatch({ type: "cities/created", payload: data });
-    } catch {
-      dispatch({
-        type: "rejected",
-        payload: "There was an error creating the city.",
-      });
-    }
-  }
-  async function removeCity(id: string) {
-    try {
-      dispatch({ type: "loading" });
-      await fetch(`${BASE_URL}/cities/${id}`, {
-        method: "DELETE",
-      });
-      dispatch({ type: "cities/deleted", payload: id });
-    } catch {
-      dispatch({
-        type: "rejected",
-        payload: "There was an error deleting the city",
-      });
-    }
+
+  // creates new city
+
+  const createCity = useCallback(function createCity(newCity: City) {
+    dispatch({ type: "cities/created", payload: newCity });
+  }, []);
+
+  // Remove the city
+
+  function removeCity(id: string) {
+    dispatch({ type: "cities/deleted", payload: id });
   }
   function setCurrentCity(data: City | null) {
     dispatch({ type: "city/set", payload: data });

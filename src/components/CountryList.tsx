@@ -1,12 +1,10 @@
 import Message from "./Message";
-import Spinner from "./Spinner";
 import styles from "./CountryList.module.css";
 import CountryItem from "./CountryItem";
 import { useCities } from "../context/CitiesContext";
 
 function CountryList() {
-  const { cities, isLoading } = useCities();
-  if (isLoading) return <Spinner />;
+  const { cities } = useCities();
   if (cities.length === 0) return <Message message="Add a city" />;
   const countries = cities.reduce<Country[]>((acc, curr) => {
     if (!acc.map((item) => item.country).includes(curr.country)) {

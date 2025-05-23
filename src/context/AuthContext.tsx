@@ -1,4 +1,5 @@
-import { createContext, useContext, useReducer } from "react";
+import { createContext, useContext, useEffect, useReducer } from "react";
+import { getItemLS, setItemLS } from "../utils/localStorage";
 
 type ContextProps = {
   user: User | null;
@@ -23,10 +24,10 @@ type Action = { type: "login"; payload: User } | { type: "logout" };
 
 const AuthContext = createContext<ContextProps | undefined>(undefined);
 
-const initialState: State = {
+const initialState: State = getItemLS<State>("worldwise_user", {
   user: null,
   isAuthenticated: false,
-};
+});
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -60,6 +61,9 @@ function AuthContextProvider({ children }: { children: React.ReactNode }) {
     reducer,
     initialState
   );
+  useEffect(() => {
+    setItemLS("worldwise_user", { user, isAuthenticated });
+  }, [user, isAuthenticated]);
   function login(email: string, password: string) {
     if (email === FAKE_USER.email && password === FAKE_USER.password) {
       dispatch({ type: "login", payload: FAKE_USER });
@@ -83,4 +87,5 @@ function useAuth() {
   return context;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { AuthContextProvider, useAuth };

@@ -1,9 +1,16 @@
-import { createContext, useCallback, useContext, useReducer } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useReducer,
+} from "react";
+import { cities } from "../data/cities";
+import { getItemLS, setItemLS } from "../utils/localStorage";
 
 type CitiesContextType = {
   cities: City[];
   currentCity: City | null;
-  isLoading: boolean;
   getCurrentCity: (id: string) => void;
   setCurrentCity: (data: City | null) => void;
   removeCity: (id: string) => void;
@@ -12,8 +19,6 @@ type CitiesContextType = {
 
 type State = {
   cities: City[];
-  isLoading: boolean;
-  error: string;
   currentCity: City | null;
 };
 
@@ -25,46 +30,7 @@ type Action =
 const CitiesContext = createContext<CitiesContextType | undefined>(undefined);
 
 const initialState: State = {
-  cities: [
-    {
-      cityName: "Lisbon",
-      country: "Portugal",
-      emoji: "🇵🇹",
-      date: "2027-10-31T15:59:59.138Z",
-      notes: "My favorite city so far!",
-      position: {
-        lat: 38.727881642324164,
-        lng: -9.140900099907554,
-      },
-      id: "73930385",
-    },
-    {
-      cityName: "Madrid",
-      country: "Spain",
-      emoji: "🇪🇸",
-      date: "2027-07-15T08:22:53.976Z",
-      notes: "",
-      position: {
-        lat: 40.46635901755316,
-        lng: -3.7133789062500004,
-      },
-      id: "17806751",
-    },
-    {
-      id: "1736883785583",
-      cityName: "Tora",
-      country: "Spain",
-      emoji: "🇪🇸",
-      date: "2025-01-14T19:43:02.442Z",
-      notes: "",
-      position: {
-        lat: 41.902277040963696,
-        lng: 1.4941406250000002,
-      },
-    },
-  ],
-  isLoading: false,
-  error: "",
+  cities: getItemLS("worldwise_cities", cities),
   currentCity: null,
 };
 
@@ -91,11 +57,11 @@ function reducer(state: State, action: Action): State {
 }
 
 function CitiesContextProvider({ children }: { children: React.ReactNode }) {
-  const [{ cities, isLoading, currentCity }, dispatch] = useReducer(
-    reducer,
-    initialState
-  );
+  const [{ cities, currentCity }, dispatch] = useReducer(reducer, initialState);
 
+  useEffect(() => {
+    setItemLS("worldwise_cities", cities);
+  }, [cities]);
   // loads individual city
 
   const getCurrentCity = useCallback(
@@ -125,7 +91,6 @@ function CitiesContextProvider({ children }: { children: React.ReactNode }) {
     <CitiesContext.Provider
       value={{
         cities,
-        isLoading,
         currentCity,
         setCurrentCity,
         getCurrentCity,
@@ -144,4 +109,5 @@ function useCities() {
     throw new Error("Cannot use `useCities` hook out of its provider's scope");
   return context;
 }
+// eslint-disable-next-line react-refresh/only-export-components
 export { CitiesContextProvider, useCities };

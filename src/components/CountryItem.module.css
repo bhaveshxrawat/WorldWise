@@ -11,6 +11,16 @@
   border-radius: 7px;
   padding: 1rem 2rem;
   border-left: 5px solid var(--color-brand--1);
+  justify-content: center;
+}
+
+.countryItem span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
 }
 
 .countryItem span:first-child {
